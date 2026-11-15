@@ -7,6 +7,11 @@ export function chooseQuestion(pool: Question[], used: string[], difficulty: Dif
 }
 export function accuracy(attempts: Attempt[]): number { return attempts.length ? Math.round(attempts.filter(a => a.correct).length / attempts.length * 100) : 0 }
 export function localDate(date: Date = new Date()): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` }
+export function isStudyDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T12:00:00`)
+  return Number.isFinite(date.getTime()) && localDate(date) === value
+}
 export function streak(attempts: Attempt[], now = new Date()): number {
   const dates = new Set(attempts.map(attempt => localDate(new Date(attempt.date))))
   const cursor = new Date(now); cursor.setHours(12, 0, 0, 0)

@@ -8,8 +8,8 @@ import { PageHeading, SubjectIcon, ProgressBar, Modal } from '../components/ui'
 
 export default function Practice() {
   const [params]=useSearchParams()
-  const [subjectId,setSubjectId]=useState(findSubject(params.get('subject') || '')?.id || 'maths')
   const topic=findTopic(params.get('topic') || '')
+  const [subjectId,setSubjectId]=useState(topic?.subjectId || findSubject(params.get('subject') || '')?.id || 'maths')
   const [started,setStarted]=useState(false)
   const [run,setRun]=useState(0)
   const pool=questions.filter(q=>q.subjectId===subjectId && (!topic || q.topicId===topic.id))

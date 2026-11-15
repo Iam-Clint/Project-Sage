@@ -1,0 +1,56 @@
+/* Refraction is strongest at an edge. Small strips keep the material physical
+   without creating a full-card offscreen filter texture for every panel. */
+.app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card) {
+  position: relative;
+  isolation: isolate;
+  backdrop-filter: none;
+}
+.app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card)::before,
+.app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18px;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: url(#sage-panel-glass);
+}
+.app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card)::before {
+  top: 0;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  background: linear-gradient(#ffffff08, transparent);
+}
+.app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card)::after {
+  bottom: 0;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+/* These surfaces already sit on solid backgrounds: another blur adds cost
+   without contributing visible refraction. */
+.app-header, .sidebar, .landing-signin, .stage-topic {
+  backdrop-filter: none;
+}
+.workspace-material-backdrop svg { position: static; }
+/* Keep the moving lens mask fixed; elastic scale/rotation provides the morph
+   without repainting a border-radius mask on every spring frame. */
+.liquid-stage { contain: layout; }
+.landing-experience { content-visibility: auto; contain-intrinsic-size: auto 820px; }
+.landing-method { content-visibility: auto; contain-intrinsic-size: auto 720px; }
+.landing-subjects-band { content-visibility: auto; contain-intrinsic-size: auto 760px; }
+.landing-study { content-visibility: auto; contain-intrinsic-size: auto 620px; }
+.landing-questions { content-visibility: auto; contain-intrinsic-size: auto 670px; }
+.landing-finale { content-visibility: auto; contain-intrinsic-size: auto 650px; }
+:root[data-theme=light] .button-primary { color: #fff; }
+@media (max-width: 768px) {
+  .landing-experience { contain-intrinsic-size: auto 850px; }
+  .landing-method { contain-intrinsic-size: auto 1300px; }
+  .landing-study { contain-intrinsic-size: auto 750px; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card)::before,
+  .app-shell :is(.panel, .dashboard-hero, .tutor-prompt-card)::after {
+    backdrop-filter: none;
+  }
+}

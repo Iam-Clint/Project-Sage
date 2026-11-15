@@ -10,6 +10,8 @@ test-results/
 
 # Local environment and credentials
 .env
+.env.*
+!.env.example
 *.local
 
 # Installed agent skills and local tooling
@@ -34,3 +36,7 @@ skills-lock.json
 .DS_Store
 Thumbs.db
 *.log
+.vercel/
+/*.credentials.json
+/*.pem
+/*.key

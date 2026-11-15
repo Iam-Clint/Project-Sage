@@ -4,54 +4,64 @@ import { ArrowLeft, ArrowRight, Eye, EyeOff, LoaderCircle, CheckCircle2 } from '
 import { Brand } from '../components/Brand'
 import { Orb } from '../components/Orb'
 import { useAuth } from '../lib/auth'
-import { authSetupMessage, supabase } from '../lib/supabase'
+import { authSetupMessage, neonAuth, authErrorMessage } from '../lib/neon'
+
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset'
 function GoogleIcon() { return <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.61 4.61 0 0 1-2 3.03v2.52h3.24c1.9-1.75 2.98-4.32 2.98-7.38Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.39l-3.24-2.52c-.9.6-2.04.97-3.38.97-2.6 0-4.81-1.76-5.6-4.12H3.06v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.4 13.94a6 6 0 0 1 0-3.88v-2.6H3.06a10 10 0 0 0 0 9.08l3.34-2.6Z"/><path fill="#EA4335" d="M12 5.94c1.47 0 2.78.5 3.82 1.49l2.87-2.87A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.94 5.46l3.34 2.6C7.19 7.7 9.4 5.94 12 5.94Z"/></svg> }
 
 export default function Auth({ mode }: { mode: AuthMode }) {
-  const { learner, enterDemo } = useAuth()
+  const { learner, enterDemo, refreshSession } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  useEffect(() => { setError(''); setSuccess('') }, [mode])
   useEffect(() => { if (learner && mode !== 'reset') navigate('/app', { replace: true }) }, [learner, mode, navigate])
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(''); setSuccess('')
-    if (!supabase) { setError(authSetupMessage); return }
+    if (!neonAuth) { setError(authSetupMessage); return }
     const values = new FormData(event.currentTarget)
     const email = String(values.get('email') || '').trim()
     const password = String(values.get('password') || '')
+    const name = String(values.get('name') || '').trim()
+    if (mode === 'signup' && !name) { setError('Please add your name so we know what to call you.'); return }
     setBusy(true)
     try {
       if (mode === 'signup') {
-        const { data, error: authError } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(values.get('name') || '').trim() }, emailRedirectTo: `${window.location.origin}/auth/callback` } })
+        const { error: authError } = await neonAuth.signUp.email({ email, password, name, callbackURL: `${window.location.origin}/auth/callback` })
         if (authError) throw authError
-        if (data.session) navigate('/app')
+        if (await refreshSession()) navigate('/app')
         else setSuccess('Check your inbox to confirm your email, then return to sign in.')
       } else if (mode === 'forgot') {
-        const { error: authError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` })
+        const { error: authError } = await neonAuth.requestPasswordReset({ email, redirectTo: `${window.location.origin}/reset-password` })
         if (authError) throw authError
         setSuccess('If an account exists for this address, you’ll receive a password reset link.')
       } else if (mode === 'reset') {
-        const { error: authError } = await supabase.auth.updateUser({ password })
+        const token = new URLSearchParams(window.location.search).get('token')
+        if (!token) throw new Error('Open the password reset link from your email to set a new password.')
+        const { error: authError } = await neonAuth.resetPassword({ newPassword: password, token })
         if (authError) throw authError
         setSuccess('Your password has been updated. You can return to your workspace.')
       } else {
-        const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        const { error: authError } = await neonAuth.signIn.email({ email, password })
         if (authError) throw authError
-        navigate('/app')
+        if (await refreshSession()) navigate('/app')
+        else setError('Your sign-in completed, but your session could not be restored. Please try again.')
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'We couldn’t connect. Please try again.') }
+    } catch (err) { setError(authErrorMessage(err)) }
     finally { setBusy(false) }
   }
   async function google() {
     setError('')
-    if (!supabase) { setError(authSetupMessage); return }
+    if (!neonAuth) { setError(authSetupMessage); return }
     setBusy(true)
-    const { error: authError } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })
-    if (authError) { setError(authError.message); setBusy(false) }
+    try {
+      const { error: authError } = await neonAuth.signIn.social({ provider: 'google', callbackURL: `${window.location.origin}/auth/callback`, errorCallbackURL: `${window.location.origin}/auth/callback` })
+      if (authError) throw authError
+    } catch (err) { setError(authErrorMessage(err)) }
+    finally { setBusy(false) }
   }
   const signup = mode === 'signup'
   const recovery = mode === 'forgot' || mode === 'reset'
@@ -67,7 +77,7 @@ export function AuthCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.slice(1))
     const query = new URLSearchParams(window.location.search)
-    const message = params.get('error_description') || query.get('error_description')
+    const message = params.get('error_description') || query.get('error_description') || query.get('error')
     if (message) setError(message)
     else if (!loading && learner) navigate('/app', { replace: true })
     else if (!loading) setError('Your sign-in link could not be completed. Please try signing in again.')

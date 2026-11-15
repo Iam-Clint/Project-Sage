@@ -1,0 +1,20 @@
+import { useState } from 'react'
+import { ArrowRight, BookOpen, CalendarDays, Check, Flame, LayoutDashboard, Sparkles, Target, TrendingUp } from 'lucide-react'
+import { Brand } from './Brand'
+import { Orb } from './Orb'
+import { subjects } from '../data/curriculum'
+
+export function LandingPreview({ onExplore }: { onExplore: () => void }) {
+  const [mode,setMode]=useState('overview')
+  return <div className="product-preview">
+    <div className="preview-chrome"><div className="window-dots"><i/><i/><i/></div><span>YOUR LEARNING, ALL TOGETHER</span><span className="preview-tag">INTERACTIVE DEMO</span></div>
+    <div className="preview-layout"><aside className="preview-sidebar"><Brand/><span className="preview-nav-label">YOUR WORKSPACE</span>{[{id:'overview',label:'Overview',icon:LayoutDashboard},{id:'subjects',label:'My subjects',icon:BookOpen},{id:'practice',label:'Practice',icon:Target}].map(({id,label,icon:Icon})=><button className={mode===id?'active':''} key={id} onClick={()=>setMode(id)} aria-pressed={mode===id}><Icon size={16}/>{label}</button>)}<div className="preview-sidebar-end"><span className="avatar">ED</span><div>Emmanuel David<small>Demo student</small></div></div></aside>
+    <div className="preview-main" key={mode}>
+      <div className="preview-heading"><div><span className="preview-overline">YOUR NEXT CHAPTER</span><h3>{mode==='overview'?'Good to have you back.':mode==='subjects'?'Follow your curiosity.':'Make the idea stick.'}</h3></div><span className="preview-date"><CalendarDays size={14}/>Today</span></div>
+      {mode==='overview'?<><div className="preview-content-grid"><div><div className="preview-banner"><div><span><Sparkles size={13}/>YOUR NEXT AHA MOMENT</span><h4>Small steps.<br/>Big understanding.</h4><button onClick={onExplore}>Continue learning<ArrowRight size={14}/></button></div><Orb/></div><div className="preview-metrics"><div><span>Topics explored</span><strong>05<small>/ 36</small></strong></div><div><span>Practice accuracy</span><strong>78<small>%</small></strong></div><div><span>Current streak</span><strong>02<small>days</small></strong></div></div><div className="preview-chart"><div><strong>Your study rhythm</strong><span>This week</span></div><div className="preview-bars">{[42,64,48,82,26,56,90].map((n,i)=><div key={i}><span style={{height:`${n}%`}}/><small>{['M','T','W','T','F','S','S'][i]}</small></div>)}</div></div></div><aside className="preview-goal"><Flame size={18}/><strong>Show up for yourself.</strong><div className="preview-ring"><span>15<small>/ 20 min</small></span></div><p>Small efforts. Real progress.</p><div className="preview-checks">{[true,true,true,false,true].map((n,i)=><span key={i} className={n?'done':''}>{n?<Check size={12}/>:null}</span>)}</div><div className="preview-plan"><span>TODAY’S NEXT STEP</span><strong>Quadratic equations</strong><small>Mathematics · 20 minutes</small></div></aside></div></>:
+      mode==='subjects'?<div className="preview-subjects">{subjects.map(s=><button key={s.id} onClick={onExplore}><span className={`subject-icon ${s.color}`}>{s.symbol}</span><h4>{s.name}</h4><p>{s.description}</p><span>6 concepts<ArrowRight size={15}/></span></button>)}</div>:<PreviewPractice/>}
+    </div></div>
+  </div>
+}
+
+function PreviewPractice(){const [answer,setAnswer]=useState<number|null>(null);return <div className="preview-practice"><span className="preview-overline">MATHEMATICS / FOUNDATION</span><h4>Let’s take it one step at a time.</h4><p>If 2x + 6 = 14, what is the value of x?</p><div className="preview-options">{[2,4,6,8].map((n,i)=><button key={n} onClick={()=>setAnswer(n)} className={answer===n?(n===4?'correct':'incorrect'):''}><span>{String.fromCharCode(65+i)}</span>{n}{answer===n?<Check size={15}/>:null}</button>)}</div><div className="preview-answer" role="status">{answer===null?<><Sparkles size={16}/>Try an answer. See what you learn.</>:answer===4?<><Check size={17}/>That’s it. Subtract 6, then divide both sides by 2.</>:<><Target size={17}/>Try subtracting 6 from both sides. What’s left?</>}</div></div>}

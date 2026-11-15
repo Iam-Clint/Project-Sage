@@ -1,0 +1,13 @@
+import { Link } from 'react-router-dom'
+import { ArrowRight, CheckCircle2, Target, Clock3 } from 'lucide-react'
+import { Activity } from '../components/Activity'
+import { PageHeading, EmptyState, ProgressBar, SubjectIcon } from '../components/ui'
+import { subjects, findTopic } from '../data/curriculum'
+import { useLearning } from '../lib/store'
+import { accuracy } from '../lib/learning'
+
+export default function Progress() {
+  const attempts=useLearning(s=>s.attempts)
+  const completed=useLearning(s=>s.completedLessons)
+  return <><PageHeading eyebrow="EVERY SMALL STEP COUNTS" title="Look how far you’re going." description="Your practice, your discoveries, and the concepts to come back to."/><div className="progress-summary stats-grid">{[{icon:Target,label:'Practice accuracy',value:`${accuracy(attempts)}%`},{icon:CheckCircle2,label:'Topics explored',value:completed.length},{icon:Clock3,label:'Practice minutes',value:Math.round(attempts.reduce((n,a)=>n+a.seconds,0)/60)}].map(({icon:Icon,label,value})=><section className="panel stat-card" key={label}><span className="stat-label"><Icon size={16}/>{label}</span><div className="stat-value">{value}</div></section>)}</div><section className="panel activity-panel"><div className="panel-heading"><h2>Your study rhythm</h2><span className="small-muted">This week</span></div><Activity attempts={attempts}/></section><div className="progress-layout"><section className="panel progress-subjects"><h2>Subject by subject</h2>{subjects.map(subject=>{const items=attempts.filter(a=>a.subjectId===subject.id);const count=subject.topics.filter(t=>completed.includes(t.id)).length;return <div className="progress-subject-row" key={subject.id}><SubjectIcon subject={subject} small/><div><strong>{subject.name}</strong><small>{count} of {subject.topics.length} topics explored · {items.length ? `${accuracy(items)}% practice accuracy` : 'Your first practice is ahead'}</small><ProgressBar value={count/subject.topics.length*100}/></div><Link className="icon-button" to={`/app/subjects?subject=${subject.id}`} aria-label={`Explore ${subject.name}`}><ArrowRight size={16}/></Link></div>})}</section><section className="panel progress-review"><h2>Your next opportunities</h2>{attempts.some(a=>!a.correct) ? [...new Set(attempts.filter(a=>!a.correct).map(a=>a.topicId))].slice(0,6).map(id=>{const topic=findTopic(id);return topic ? <Link className="review-topic" key={id} to={`/app/lesson/${id}`}><span><strong>{topic.name}</strong><small>Revisit the idea, then try again.</small></span><ArrowRight size={15}/></Link> : null}) : <EmptyState title="Keep building your confidence." description="After practice, concepts to revisit will appear here." to="/app/practice" label="Start practising"/>}</section></div></>
+}
