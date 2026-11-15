@@ -1,0 +1,36 @@
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.cache/
+.preview/
+*.tsbuildinfo
+
+# Local environment and credentials
+.env
+*.local
+
+# Installed agent skills and local tooling
+.agents/
+.claude/
+.codex/
+skills/
+skills-lock.json
+.taste-skill/
+
+# Original project references (keep locally)
+/IMG-*.jpg
+/Screenshot*.png
+/*.docx
+/*.pdf
+/screenshots/
+/shots/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
